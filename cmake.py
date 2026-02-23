@@ -29,7 +29,7 @@ import sys
 import os
 
 PYPPERONI_ROOT = os.path.abspath(os.path.dirname(__file__))
-PYTHON_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'python'))
+PYTHON_ROOT = os.environ.get('PYTHON_ROOT', sys.prefix)
 
 
 class CMakeFileGenerator:
