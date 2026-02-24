@@ -15,7 +15,7 @@
 # language governing permissions and limitations under the
 # License.
 
-from .util import *
+from app.util import *
 
 from io import StringIO
 import marshal

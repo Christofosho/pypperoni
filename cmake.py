@@ -15,10 +15,10 @@
 # language governing permissions and limitations under the
 # License.
 
-from .files import ConditionalFile, FileContainer
-from .module import Module, PackageModule, write_modules_file
-from .modulereducer import reduce_modules
-from .util import safePrint
+from app.files import ConditionalFile, FileContainer
+from app.module import Module, PackageModule, write_modules_file
+from app.modulereducer import reduce_modules
+from app.util import safePrint
 
 from threading import Thread, Lock
 from queue import Queue, Empty
