@@ -2,8 +2,9 @@ name: Build and run samples
 
 on:
   push:
-    branches:
-      - '**'
+  pull_request:
+    branches: [master]
+
 jobs:
   samples:
     name: ${{ matrix.sample }}
@@ -32,23 +33,6 @@ jobs:
       run: |
         apt-get install -y cmake
         cmake --version
-
-    - name: Prepare Python root layout
-      run: |
-        PYTHON_PREFIX=$(python -c "import sys; print(sys.prefix)")
-        PYTHON_ROOT=${{ github.workspace }}/python-root
-        mkdir -p $PYTHON_ROOT/build/linux2
-        ln -s $PYTHON_PREFIX/include/python3.6m $PYTHON_ROOT/Include
-        # Robust Lib symlink: check for python3.6, fallback to lib
-        if [ -d "$PYTHON_PREFIX/lib/python3.6" ]; then
-          ln -s $PYTHON_PREFIX/lib/python3.6 $PYTHON_ROOT/Lib
-        elif [ -d "$PYTHON_PREFIX/lib" ]; then
-          ln -s $PYTHON_PREFIX/lib $PYTHON_ROOT/Lib
-        else
-          echo "Python stdlib not found!" && exit 1
-        fi
-        ln -s $PYTHON_PREFIX/lib/libpython3.6m.a $PYTHON_ROOT/build/linux2/libpython3.6.a
-        echo "PYTHON_ROOT=$PYTHON_ROOT" >> $GITHUB_ENV
 
     - name: Build ${{ matrix.sample }}
       run: |
