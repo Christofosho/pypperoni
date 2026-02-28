@@ -2,8 +2,8 @@ name: Build and run samples
 
 on:
   push:
-  pull_request:
-    branches: [master]
+    branches:
+      - '**'
 
 jobs:
   samples:
