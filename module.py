@@ -20,8 +20,7 @@ from .config import IMPORT_ALIASES, SPLIT_INTERVAL
 from .context import Context
 from .util import *
 
-from opcode import *
-globals().update(opmap)
+from opcode import opmap, opname, hasjrel, hasjabs
 
 import hashlib
 import struct
@@ -98,23 +97,23 @@ class Module(ModuleBase):
         self.handle_op(codeobj, context, label, op, oparg, line)
 
     def handle_op(self, codeobj, context, label, op, oparg, line):
-        if op == NOP:
+        if op == opmap['NOP']:
             context.insert_line('/* NOP */')
 
-        elif op == POP_TOP:
+        elif op == opmap['POP_TOP']:
             context.begin_block()
             context.insert_line('v = POP();')
             context.insert_line('Py_DECREF(v);')
             context.end_block()
 
-        elif op == DUP_TOP:
+        elif op == opmap['DUP_TOP']:
             context.begin_block()
             context.insert_line('v = TOP();')
             context.insert_line('Py_INCREF(v);')
             context.insert_line('PUSH(v);')
             context.end_block()
 
-        elif op == DUP_TOP_TWO:
+        elif op == opmap['DUP_TOP_TWO']:
             context.begin_block()
             context.insert_line('v = TOP();')
             context.insert_line('u = SECOND();')
@@ -124,7 +123,7 @@ class Module(ModuleBase):
             context.insert_line('PUSH(v);')
             context.end_block()
 
-        elif op == ROT_TWO:
+        elif op == opmap['ROT_TWO']:
             context.begin_block()
             context.insert_line('v = TOP();')
             context.insert_line('w = SECOND();')
@@ -132,7 +131,7 @@ class Module(ModuleBase):
             context.insert_line('SET_SECOND(v);')
             context.end_block()
 
-        elif op == ROT_THREE:
+        elif op == opmap['ROT_THREE']:
             context.begin_block()
             context.insert_line('v = TOP();')
             context.insert_line('w = SECOND();')
@@ -142,7 +141,7 @@ class Module(ModuleBase):
             context.insert_line('SET_THIRD(v);')
             context.end_block()
 
-        elif op == LOAD_CONST:
+        elif op == opmap['LOAD_CONST']:
             context.begin_block()
 
             value = codeobj.co_consts[oparg]
@@ -152,7 +151,7 @@ class Module(ModuleBase):
                 context.end_block()
 
             elif len(context.buf) > context.i + 1 and \
-                 context.buf[context.i + 1][IDX_OP] == IMPORT_NAME:
+                 context.buf[context.i + 1][IDX_OP] == opmap['IMPORT_NAME']:
                 context.end_block()
                 context.insert_line('/* DETECTED IMPORT */')
                 self.__handle_import(codeobj, context, value)
@@ -169,7 +168,7 @@ class Module(ModuleBase):
                 context.insert_line('PUSH(x);')
                 context.end_block()
 
-        elif op == STORE_NAME:
+        elif op == opmap['STORE_NAME']:
             context.begin_block()
 
             name = codeobj.co_names[oparg]
@@ -189,7 +188,7 @@ class Module(ModuleBase):
 
             context.end_block()
 
-        elif op == STORE_GLOBAL:
+        elif op == opmap['STORE_GLOBAL']:
             context.begin_block()
 
             name = codeobj.co_names[oparg]
@@ -203,7 +202,7 @@ class Module(ModuleBase):
 
             context.end_block()
 
-        elif op == STORE_FAST:
+        elif op == opmap['STORE_FAST']:
             context.begin_block()
 
             context.insert_line('x = POP();')
@@ -213,7 +212,7 @@ class Module(ModuleBase):
 
             context.end_block()
 
-        elif op == STORE_ATTR:
+        elif op == opmap['STORE_ATTR']:
             context.begin_block()
 
             attr = codeobj.co_names[oparg]
@@ -230,7 +229,7 @@ class Module(ModuleBase):
 
             context.end_block()
 
-        elif op == STORE_SUBSCR:
+        elif op == opmap['STORE_SUBSCR']:
             context.begin_block()
             context.insert_line('w = POP();')
             context.insert_line('v = POP();')
@@ -244,7 +243,7 @@ class Module(ModuleBase):
             context.insert_line('}')
             context.end_block()
 
-        elif op == STORE_DEREF:
+        elif op == opmap['STORE_DEREF']:
             context.begin_block()
             context.insert_line('v = POP();')
             context.insert_line('x = freevars[%d]; /* cell */' % oparg)
@@ -253,7 +252,7 @@ class Module(ModuleBase):
             context.insert_line('Py_XDECREF(tmp);')
             context.end_block()
 
-        elif op == DELETE_FAST:
+        elif op == opmap['DELETE_FAST']:
             context.begin_block()
             context.insert_line('tmp = fastlocals[%d];' % oparg)
             context.insert_line('if (tmp == NULL) {')
@@ -264,7 +263,7 @@ class Module(ModuleBase):
             context.insert_line('Py_DECREF(tmp);')
             context.end_block()
 
-        elif op == DELETE_NAME:
+        elif op == opmap['DELETE_NAME']:
             context.begin_block()
 
             name = codeobj.co_names[oparg]
@@ -280,7 +279,7 @@ class Module(ModuleBase):
 
             context.end_block()
 
-        elif op == DELETE_GLOBAL:
+        elif op == opmap['DELETE_GLOBAL']:
             context.begin_block()
 
             name = codeobj.co_names[oparg]
@@ -292,7 +291,7 @@ class Module(ModuleBase):
             context.insert_line('}')
             context.end_block()
 
-        elif op == DELETE_ATTR:
+        elif op == opmap['DELETE_ATTR']:
             context.begin_block()
 
             name = codeobj.co_names[oparg]
@@ -305,7 +304,7 @@ class Module(ModuleBase):
             context.insert_line('}')
             context.end_block()
 
-        elif op == DELETE_SUBSCR:
+        elif op == opmap['DELETE_SUBSCR']:
             context.begin_block()
             context.insert_line('w = POP();')
             context.insert_line('v = POP();')
@@ -317,7 +316,7 @@ class Module(ModuleBase):
             context.insert_line('}')
             context.end_block()
 
-        elif op == DELETE_DEREF:
+        elif op == opmap['DELETE_DEREF']:
             context.begin_block()
             context.insert_line('tmp = freevars[%d]; /* cell */' % oparg)
             context.insert_line('if (PyCell_GET(tmp) == NULL) {')
@@ -327,7 +326,7 @@ class Module(ModuleBase):
             context.insert_line('PyCell_Set(tmp, NULL);')
             context.end_block()
 
-        elif op == COMPARE_OP:
+        elif op == opmap['COMPARE_OP']:
             context.begin_block()
 
             context.insert_line('w = POP(); /* right */')
@@ -341,7 +340,7 @@ class Module(ModuleBase):
             context.insert_line('SET_TOP(x);')
             context.end_block()
 
-        elif op == BUILD_STRING:
+        elif op == opmap['BUILD_STRING']:
             context.begin_block()
             context.insert_line('u = PyUnicode_New(0, 0); /* empty */')
             context.insert_line('if (u == NULL) {')
@@ -360,7 +359,7 @@ class Module(ModuleBase):
             context.insert_line('PUSH(x);')
             context.end_block()
 
-        elif op == BUILD_LIST:
+        elif op == opmap['BUILD_LIST']:
             context.begin_block()
             context.insert_line('u = PyList_New(%d);' % oparg)
             context.insert_line('if (u == NULL) {')
@@ -374,7 +373,7 @@ class Module(ModuleBase):
             context.insert_line('PUSH(u);')
             context.end_block()
 
-        elif op in (BUILD_TUPLE_UNPACK_WITH_CALL, BUILD_TUPLE_UNPACK, BUILD_LIST_UNPACK):
+        elif op in (opmap['BUILD_TUPLE_UNPACK_WITH_CALL'], opmap['BUILD_TUPLE_UNPACK'], opmap['BUILD_LIST_UNPACK']):
             context.begin_block()
             context.insert_line('u = PyList_New(0); /* sum */')
             context.insert_line('if (u == NULL) {')
@@ -389,7 +388,7 @@ class Module(ModuleBase):
                 context.insert_line('}')
                 context.insert_line('Py_DECREF(v);')
 
-            if op != BUILD_LIST_UNPACK:
+            if op != opmap['BUILD_LIST_UNPACK']:
                 context.insert_line('x = PyList_AsTuple(u);')
                 context.insert_line('Py_DECREF(u);')
                 context.insert_line('if (x == NULL) {')
@@ -405,7 +404,7 @@ class Module(ModuleBase):
             context.insert_line('PUSH(x);')
             context.end_block()
 
-        elif op == BUILD_MAP_UNPACK_WITH_CALL:
+        elif op == opmap['BUILD_MAP_UNPACK_WITH_CALL']:
             context.begin_block()
             context.insert_line('u = PyDict_New(); /* sum */')
             context.insert_line('if (u == NULL) {')
@@ -427,7 +426,7 @@ class Module(ModuleBase):
             context.insert_line('PUSH(u);')
             context.end_block()
 
-        elif op == BUILD_MAP_UNPACK:
+        elif op == opmap['BUILD_MAP_UNPACK']:
             context.begin_block()
             context.insert_line('u = PyDict_New(); /* sum */')
             context.insert_line('if (u == NULL) {')
@@ -451,7 +450,7 @@ class Module(ModuleBase):
             context.insert_line('PUSH(u);')
             context.end_block()
 
-        elif op == LIST_APPEND:
+        elif op == opmap['LIST_APPEND']:
             context.begin_block()
             context.insert_line('v = POP();')
             context.insert_line('x = PEEK(%d);' % oparg)
@@ -462,7 +461,7 @@ class Module(ModuleBase):
             context.insert_line('}')
             context.end_block()
 
-        elif op == BUILD_TUPLE:
+        elif op == opmap['BUILD_TUPLE']:
             context.begin_block()
             context.insert_line('u = PyTuple_New(%d);' % oparg)
             context.insert_line('if (u == NULL) {')
@@ -476,7 +475,7 @@ class Module(ModuleBase):
             context.insert_line('PUSH(u);')
             context.end_block()
 
-        elif op == BUILD_SET:
+        elif op == opmap['BUILD_SET']:
             context.begin_block()
             context.insert_line('u = PySet_New(NULL);')
             context.insert_line('if (u == NULL) {')
@@ -496,7 +495,7 @@ class Module(ModuleBase):
             context.insert_line('PUSH(u);')
             context.end_block()
 
-        elif op == SET_ADD:
+        elif op == opmap['SET_ADD']:
             context.begin_block()
             context.insert_line('v = POP();')
             context.insert_line('x = PEEK(%d);' % oparg)
@@ -507,7 +506,7 @@ class Module(ModuleBase):
             context.insert_line('}')
             context.end_block()
 
-        elif op == BUILD_MAP:
+        elif op == opmap['BUILD_MAP']:
             context.add_decl_once('i', 'int', None, False)
 
             context.begin_block()
@@ -537,7 +536,7 @@ class Module(ModuleBase):
             context.insert_line('PUSH(u);')
             context.end_block()
 
-        elif op == MAP_ADD:
+        elif op == opmap['MAP_ADD']:
             context.begin_block()
             context.insert_line('x = POP();')
             context.insert_line('v = POP();')
@@ -550,7 +549,7 @@ class Module(ModuleBase):
             context.insert_line('}')
             context.end_block()
 
-        elif op == BUILD_CONST_KEY_MAP:
+        elif op == opmap['BUILD_CONST_KEY_MAP']:
             context.begin_block()
 
             context.insert_line('x = POP(); /* keys */')
@@ -583,7 +582,7 @@ class Module(ModuleBase):
 
             context.end_block()
 
-        elif op == BUILD_SLICE:
+        elif op == opmap['BUILD_SLICE']:
             context.begin_block()
 
             if oparg == 3:
@@ -607,7 +606,7 @@ class Module(ModuleBase):
 
             context.end_block()
 
-        elif op == LOAD_NAME:
+        elif op == opmap['LOAD_NAME']:
             context.begin_block()
             name = codeobj.co_names[oparg]
             context.insert_line('x = __pypperoni_IMPL_load_name(f, %s); /* %s */' % (
@@ -619,7 +618,7 @@ class Module(ModuleBase):
             context.insert_line('PUSH(x);')
             context.end_block()
 
-        elif op == LOAD_ATTR:
+        elif op == opmap['LOAD_ATTR']:
             context.begin_block()
             attr = codeobj.co_names[oparg]
             context.insert_line('v = TOP();')
@@ -631,7 +630,7 @@ class Module(ModuleBase):
             context.insert_line('SET_TOP(x);')
             context.end_block()
 
-        elif op == LOAD_GLOBAL:
+        elif op == opmap['LOAD_GLOBAL']:
             context.begin_block()
             name = codeobj.co_names[oparg]
             context.insert_line('x = __pypperoni_IMPL_load_global(f, %s);' % context.register_const(name))
@@ -642,7 +641,7 @@ class Module(ModuleBase):
             context.insert_line('PUSH(x);')
             context.end_block()
 
-        elif op == LOAD_FAST:
+        elif op == opmap['LOAD_FAST']:
             context.begin_block()
             name = codeobj.co_varnames[oparg]
             context.insert_line('x = fastlocals[%d];' % oparg)
@@ -655,7 +654,7 @@ class Module(ModuleBase):
             context.insert_line('PUSH(x);')
             context.end_block()
 
-        elif op == LOAD_DEREF:
+        elif op == opmap['LOAD_DEREF']:
             context.begin_block()
             context.insert_line('x = freevars[%d]; /* cell */' % oparg)
             context.insert_line('u = PyCell_GET(x);')
@@ -675,14 +674,14 @@ class Module(ModuleBase):
             context.insert_line('PUSH(u);')
             context.end_block()
 
-        elif op == LOAD_CLOSURE:
+        elif op == opmap['LOAD_CLOSURE']:
             context.begin_block()
             context.insert_line('x = freevars[%d];' % oparg)
             context.insert_line('Py_INCREF(x);')
             context.insert_line('PUSH(x);')
             context.end_block()
 
-        elif op == LOAD_BUILD_CLASS:
+        elif op == opmap['LOAD_BUILD_CLASS']:
             context.begin_block()
             context.insert_line('err = __pypperoni_IMPL_load_build_class(f, &x);')
             context.insert_line('if (err != 0) {')
@@ -691,7 +690,7 @@ class Module(ModuleBase):
             context.insert_line('PUSH(x);')
             context.end_block()
 
-        elif op == LOAD_CLASSDEREF:
+        elif op == opmap['LOAD_CLASSDEREF']:
             context.begin_block()
 
             name = codeobj.co_freevars[oparg - len(codeobj.co_cellvars)]
@@ -720,7 +719,7 @@ class Module(ModuleBase):
             context.insert_line('PUSH(v);')
             context.end_block()
 
-        elif op in (POP_JUMP_IF_TRUE, POP_JUMP_IF_FALSE):
+        elif op in (opmap['POP_JUMP_IF_TRUE'], opmap['POP_JUMP_IF_FALSE']):
             context.add_decl_once('result', 'int', None, False)
             context.insert_line('x = POP();')
             context.insert_line('err = __pypperoni_IMPL_check_cond(x, &result);')
@@ -729,12 +728,12 @@ class Module(ModuleBase):
             context.insert_handle_error(line, label)
             context.insert_line('}')
             context.insert_line('if (%sresult)' %
-                                ('!' if op == POP_JUMP_IF_FALSE else ''))
+                                ('!' if op == opmap['POP_JUMP_IF_FALSE'] else ''))
             context.begin_block()
             context.insert_line('goto label_%d;' % oparg)
             context.end_block()
 
-        elif op in (JUMP_IF_TRUE_OR_POP, JUMP_IF_FALSE_OR_POP):
+        elif op in (opmap['JUMP_IF_TRUE_OR_POP'], opmap['JUMP_IF_FALSE_OR_POP']):
             context.add_decl_once('result', 'int', None, False)
             context.insert_line('x = TOP();')
             context.insert_line('err = __pypperoni_IMPL_check_cond(x, &result);')
@@ -742,7 +741,7 @@ class Module(ModuleBase):
             context.insert_handle_error(line, label)
             context.insert_line('}')
             context.insert_line('if (%sresult)' %
-                                ('!' if op == JUMP_IF_FALSE_OR_POP else ''))
+                                ('!' if op == opmap['JUMP_IF_FALSE_OR_POP'] else ''))
             context.begin_block()
             context.insert_line('goto label_%d;' % oparg)
             context.end_block()
@@ -750,18 +749,18 @@ class Module(ModuleBase):
             context.insert_line('STACKADJ(-1);')
             context.insert_line('Py_DECREF(x);')
 
-        elif op == JUMP_FORWARD:
+        elif op == opmap['JUMP_FORWARD']:
             if oparg:
                 context.begin_block()
                 context.insert_line('goto label_%d;' % (oparg + label + 2))
                 context.end_block()
 
-        elif op == JUMP_ABSOLUTE:
+        elif op == opmap['JUMP_ABSOLUTE']:
             context.begin_block()
             context.insert_line('goto label_%d;' % oparg)
             context.end_block()
 
-        elif op == BEFORE_ASYNC_WITH:
+        elif op == opmap['BEFORE_ASYNC_WITH']:
             context.begin_block()
             context.insert_line('u = TOP();')
             context.insert_line('v = PyObject_GetAttrString(u, "__aexit__");')
@@ -784,14 +783,14 @@ class Module(ModuleBase):
             context.insert_line('PUSH(x);')
             context.end_block()
 
-        elif op == SETUP_ASYNC_WITH:
+        elif op == opmap['SETUP_ASYNC_WITH']:
             context.begin_block()
             context.insert_line('void* __addr;')
             context.insert_get_address(label + oparg + 2)
             context.insert_line('PyFrame_BlockSetup(f, SETUP_FINALLY, __addr, STACK_LEVEL() - 1);')
             context.end_block()
 
-        elif op == GET_AWAITABLE:
+        elif op == opmap['GET_AWAITABLE']:
             context.add_decl_once('type', 'PyTypeObject*', None, False)
             context.begin_block()
             context.insert_line('u = TOP(); /* iterable */')
@@ -799,8 +798,8 @@ class Module(ModuleBase):
 
             prevopcode = context.buf[context.i - 2][IDX_OP]
             prevopcode2msg = {
-                BEFORE_ASYNC_WITH: 'enter',
-                WITH_CLEANUP_START: 'exit'
+                opmap['BEFORE_ASYNC_WITH']: 'enter',
+                opmap['WITH_CLEANUP_START']: 'exit'
             }
             if prevopcode in prevopcode2msg:
                 msg = "'async with' received an object from __a%s__ that does not implement __await__: %%.100s"
@@ -830,7 +829,7 @@ class Module(ModuleBase):
             context.insert_line('}')
             context.end_block()
 
-        elif op == GET_AITER:
+        elif op == opmap['GET_AITER']:
             context.begin_block()
             context.insert_line('u = POP();')
             context.insert_line('v = __pypperoni_IMPL_get_aiter(u);')
@@ -840,7 +839,7 @@ class Module(ModuleBase):
             context.insert_line('PUSH(v);')
             context.end_block()
 
-        elif op == GET_ANEXT:
+        elif op == opmap['GET_ANEXT']:
             context.begin_block()
             context.insert_line('u = TOP();')
             context.insert_line('v = __pypperoni_IMPL_get_anext(u);')
@@ -850,7 +849,7 @@ class Module(ModuleBase):
             context.insert_line('PUSH(v);')
             context.end_block()
 
-        elif op == GET_ITER:
+        elif op == opmap['GET_ITER']:
             context.begin_block()
             context.insert_line('u = TOP();')
             context.insert_line('v = PyObject_GetIter(u);')
@@ -861,7 +860,7 @@ class Module(ModuleBase):
             context.insert_line('SET_TOP(v);')
             context.end_block()
 
-        elif op == FOR_ITER:
+        elif op == opmap['FOR_ITER']:
             context.begin_block()
             context.insert_line('u = TOP();')
             context.insert_line('x = (*u->ob_type->tp_iternext)(u);')
@@ -887,7 +886,7 @@ class Module(ModuleBase):
 
             context.end_block()
 
-        elif op == UNPACK_SEQUENCE:
+        elif op == opmap['UNPACK_SEQUENCE']:
             context.begin_block()
             context.insert_line('u = POP();')
             context.insert_line('err = __pypperoni_IMPL_unpack_sequence(u, &stack_pointer, %d);' % oparg)
@@ -896,7 +895,7 @@ class Module(ModuleBase):
             context.insert_line('}')
             context.end_block()
 
-        elif op == UNPACK_EX:
+        elif op == opmap['UNPACK_EX']:
             context.begin_block()
             context.insert_line('u = POP();')
             context.insert_line('err = __pypperoni_IMPL_unpack_ex(u, &stack_pointer, %d);' % oparg)
@@ -905,10 +904,10 @@ class Module(ModuleBase):
             context.insert_line('}')
             context.end_block()
 
-        elif op in (CALL_FUNCTION, CALL_FUNCTION_KW):
+        elif op in (opmap['CALL_FUNCTION'], opmap['CALL_FUNCTION_KW']):
             context.begin_block()
 
-            if op == CALL_FUNCTION_KW:
+            if op == opmap['CALL_FUNCTION_KW']:
                 context.insert_line('v = POP();')
 
             else:
@@ -916,7 +915,7 @@ class Module(ModuleBase):
 
             context.insert_line('u = __pypperoni_IMPL_call_func(&stack_pointer, %d, v);' % oparg)
 
-            if op == CALL_FUNCTION_KW:
+            if op == opmap['CALL_FUNCTION_KW']:
                 context.insert_line('Py_DECREF(v);')
 
             context.insert_line('if (u == NULL) {')
@@ -925,7 +924,7 @@ class Module(ModuleBase):
             context.insert_line('PUSH(u);')
             context.end_block()
 
-        elif op == CALL_FUNCTION_EX:
+        elif op == opmap['CALL_FUNCTION_EX']:
             context.begin_block()
 
             if oparg & 0x01:
@@ -1002,7 +1001,7 @@ class Module(ModuleBase):
             context.insert_line('SET_TOP(x);')
             context.end_block()
 
-        elif op == MAKE_FUNCTION:
+        elif op == opmap['MAKE_FUNCTION']:
             context.add_decl_once('codeobj', 'PyCodeObject*', None, False)
             context.add_decl_once('func', 'PyFunctionObject*', None, False)
             context.begin_block()
@@ -1065,14 +1064,14 @@ class Module(ModuleBase):
             context.insert_line('PUSH((PyObject*)func);')
             context.end_block()
 
-        elif op in (SETUP_LOOP, SETUP_EXCEPT, SETUP_FINALLY):
+        elif op in (opmap['SETUP_LOOP'], opmap['SETUP_EXCEPT'], opmap['SETUP_FINALLY']):
             context.begin_block()
             context.insert_line('void* __addr;')
             context.insert_get_address(label + oparg + 2)
             context.insert_line('PyFrame_BlockSetup(f, %d, __addr, STACK_LEVEL());' % op)
             context.end_block()
 
-        elif op == RAISE_VARARGS:
+        elif op == opmap['RAISE_VARARGS']:
             context.begin_block()
             context.insert_line('u = NULL;')
             context.insert_line('v = NULL;')
@@ -1089,7 +1088,7 @@ class Module(ModuleBase):
             context.insert_handle_error(line, label)
             context.end_block()
 
-        elif op == YIELD_VALUE:
+        elif op == opmap['YIELD_VALUE']:
             context.begin_block()
             context.insert_line('retval = POP();')
 
@@ -1105,13 +1104,13 @@ class Module(ModuleBase):
             context.insert_yield(line, label + 2)
             context.end_block()
 
-        elif op == RETURN_VALUE:
+        elif op == opmap['RETURN_VALUE']:
             context.begin_block()
             context.insert_line('retval = POP();')
             context.insert_line('*why = WHY_RETURN; goto fast_block_end;')
             context.end_block()
 
-        elif op == CONTINUE_LOOP:
+        elif op == opmap['CONTINUE_LOOP']:
             context.begin_block()
             context.insert_line('void* __addr;')
             context.insert_get_address(oparg)
@@ -1119,26 +1118,26 @@ class Module(ModuleBase):
             context.insert_line('*why = WHY_CONTINUE; goto fast_block_end;')
             context.end_block()
 
-        elif op == BREAK_LOOP:
+        elif op == opmap['BREAK_LOOP']:
             context.begin_block()
             context.insert_line('*why = WHY_BREAK; goto fast_block_end;')
             context.end_block()
 
-        elif op == POP_BLOCK:
+        elif op == opmap['POP_BLOCK']:
             context.add_decl_once('block', 'PyTryBlock*', None, False)
             context.begin_block()
             context.insert_line('block = PyFrame_BlockPop(f);')
             context.insert_line('UNWIND_BLOCK(block)')
             context.end_block()
 
-        elif op == POP_EXCEPT:
+        elif op == opmap['POP_EXCEPT']:
             context.add_decl_once('block', 'PyTryBlock*', None, False)
             context.begin_block()
             context.insert_line('block = PyFrame_BlockPop(f);')
             context.insert_line('UNWIND_EXCEPT_HANDLER(block);')
             context.end_block()
 
-        elif op == END_FINALLY:
+        elif op == opmap['END_FINALLY']:
             context.add_decl_once('block', 'PyTryBlock*', None, False)
             context.begin_block()
             context.insert_line('x = POP(); /* status */')
@@ -1172,7 +1171,7 @@ class Module(ModuleBase):
 
             context.end_block()
 
-        elif op == SETUP_WITH:
+        elif op == opmap['SETUP_WITH']:
             context.begin_block()
             context.insert_line('w = TOP();')
             context.insert_line('err = __pypperoni_IMPL_setup_with(w, &u, &x);')
@@ -1187,7 +1186,7 @@ class Module(ModuleBase):
             context.insert_line('PUSH(x);')
             context.end_block()
 
-        elif op == WITH_CLEANUP_START:
+        elif op == opmap['WITH_CLEANUP_START']:
             context.add_decl_once('block', 'PyTryBlock*', None, False)
             context.begin_block()
             context.insert_line('exc = TOP();')
@@ -1247,7 +1246,7 @@ class Module(ModuleBase):
 
             context.end_block()
 
-        elif op == WITH_CLEANUP_FINISH:
+        elif op == opmap['WITH_CLEANUP_FINISH']:
             context.begin_block()
             context.insert_line('x = POP();')
             context.insert_line('exc = POP();')
@@ -1264,7 +1263,7 @@ class Module(ModuleBase):
             context.end_block()
             context.end_block()
 
-        elif op == GET_YIELD_FROM_ITER:
+        elif op == opmap['GET_YIELD_FROM_ITER']:
             context.begin_block()
             context.insert_line('x = TOP(); /* iterable */')
 
@@ -1291,7 +1290,7 @@ class Module(ModuleBase):
 
             context.end_block()
 
-        elif op == YIELD_FROM:
+        elif op == opmap['YIELD_FROM']:
             context.begin_block()
             context.insert_line('v = POP();')
             context.insert_line('x = TOP(); /* receiver */')
@@ -1326,7 +1325,7 @@ class Module(ModuleBase):
 
             context.end_block()
 
-        elif op == FORMAT_VALUE:
+        elif op == opmap['FORMAT_VALUE']:
             context.begin_block()
 
             if (oparg & FVS_MASK) == FVS_HAVE_SPEC:
@@ -1480,8 +1479,8 @@ class Module(ModuleBase):
             elif instr[IDX_OP] in hasjabs:
                 yield_at = max(yield_at, instr[IDX_OPARG] + 1)
 
-            elif instr[IDX_OP] == LOAD_CONST:
-                if len(buf) > i + 2 and buf[i + 2][IDX_OP] == IMPORT_NAME:
+            elif instr[IDX_OP] == opmap['LOAD_CONST']:
+                if len(buf) > i + 2 and buf[i + 2][IDX_OP] == opmap['IMPORT_NAME']:
                     # Skip until next line:
                     import_instr_size = 0
                     while buf[i + import_instr_size][IDX_LINE] == instr[IDX_LINE]:
@@ -1531,7 +1530,7 @@ class Module(ModuleBase):
                     # unless this is "imported as" (ie. "import module.submodule as M")
                     # In that case, the import will be followed by LOAD_ATTR
                     store_tail = False
-                    while context.buf[context.i][IDX_OP] == LOAD_ATTR:
+                    while context.buf[context.i][IDX_OP] == opmap['LOAD_ATTR']:
                         store_tail = True
                         context.i += 1
 
