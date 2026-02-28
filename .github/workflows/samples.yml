@@ -1,234 +1,111 @@
 name: Build and run samples
 
-on: [push]
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
 
 jobs:
-  sample-00:
-    name: 00-hello_world
+  setup:
+    name: Build CPython 3.6.8
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
-      with:
-        path: pypperoni/pypperoni
-    - name: Set up Python 3.6.8
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.6.8
-    - name: Install dependencies
+    - name: Install build dependencies
       run: |
-        sudo apt-get install -y cmake build-essential gcc g++ python3-dev libz-dev libssl-dev liblzma-dev libgdbm-dev
-    - name: Clone Pypperoni/Python-3.6.8
-      uses: actions/checkout@v2
-      with:
-        repository: Pypperoni/Python-3.6.8
-        path: pypperoni/python
-    - name: Build Pypperoni/Python-3.6.8
-      run: |
-        cd pypperoni/python
-        mkdir -p build/linux2
-        cd build/linux2
-        cmake ../..
-        make -j
-    - name: Clone Pypperoni/samples
-      uses: actions/checkout@v2
-      with:
-        repository: Pypperoni/samples
-        path: pypperoni/samples
-    - name: Build 00-hello_world
-      run: |
-        cd pypperoni/samples/00-hello_world
-        python3.6 build.py
-        cd build
-        cmake -DCMAKE_BUILD_TYPE=Release .
-        make -j8
-    - name: Run 00-hello_world
-      run: |
-        cd pypperoni/samples/00-hello_world/build
-        ./00-hello_world
-        cd ..
-        rm -rf build
+        sudo apt-get update
+        sudo apt-get install -y build-essential gcc g++ libz-dev libssl-dev liblzma-dev libgdbm-dev libffi-dev libreadline-dev libsqlite3-dev libbz2-dev libncurses5-dev
 
-  sample-01:
-    name: 01-basic
+    - name: Build CPython 3.6.8
+      run: |
+        wget -q https://www.python.org/ftp/python/3.6.8/Python-3.6.8.tgz
+        tar xzf Python-3.6.8.tgz
+        cd Python-3.6.8
+        ./configure
+        make -j$(nproc)
+        mkdir -p build/linux2
+        ln -s $(pwd)/libpython3.6m.a build/linux2/libpython3.6.a
+
+    - name: Package CPython artifact
+      run: |
+        tar czf cpython-3.6.8.tar.gz Python-3.6.8
+
+    - name: Upload CPython artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: cpython-3.6.8
+        path: cpython-3.6.8.tar.gz
+        retention-days: 1
+
+  samples:
+    name: ${{ matrix.sample }}
     runs-on: ubuntu-latest
+    needs: setup
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - sample: 00-hello_world
+            run_args: ""
+          - sample: 01-basic
+            run_args: ""
+          - sample: 02-exceptions
+            run_args: "catchall"
+          - sample: 03-async
+            run_args: ""
+          - sample: 04-threading
+            run_args: ""
+
+    env:
+      PYTHON_ROOT: ${{ github.workspace }}/Python-3.6.8
 
     steps:
-    - uses: actions/checkout@v2
-      with:
-        path: pypperoni/pypperoni
-    - name: Set up Python 3.6.8
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.6.8
-    - name: Install dependencies
+    - uses: actions/checkout@v4
+
+    - name: Install system dependencies
       run: |
-        sudo apt-get install -y cmake build-essential gcc g++ python3-dev libz-dev libssl-dev liblzma-dev libgdbm-dev
-    - name: Clone Pypperoni/Python-3.6.8
-      uses: actions/checkout@v2
-      with:
-        repository: Pypperoni/Python-3.6.8
-        path: pypperoni/python
-    - name: Build Pypperoni/Python-3.6.8
+        sudo apt-get update
+        sudo apt-get install -y build-essential gcc g++ libz-dev libssl-dev liblzma-dev libgdbm-dev libffi-dev libreadline-dev libsqlite3-dev libbz2-dev libncurses5-dev
+
+    - name: Install CMake 3.4.3
       run: |
-        cd pypperoni/python
+        sudo apt-get remove -y --purge cmake || true
+        wget -q https://cmake.org/files/v3.4/cmake-3.4.3-Linux-x86_64.tar.gz
+        tar xzf cmake-3.4.3-Linux-x86_64.tar.gz
+        sudo cp -r cmake-3.4.3-Linux-x86_64/* /usr/local/
+        hash -r
+        cmake --version
+
+    - name: Download CPython artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: cpython-3.6.8
+
+    - name: Extract CPython 3.6.8
+      run: |
+        tar xzf cpython-3.6.8.tar.gz
+        cd Python-3.6.8
         mkdir -p build/linux2
-        cd build/linux2
-        cmake ../..
-        make -j
-    - name: Clone Pypperoni/samples
-      uses: actions/checkout@v2
-      with:
-        repository: Pypperoni/samples
-        path: pypperoni/samples
-    - name: Build 01-basic
+        ln -sf $(pwd)/libpython3.6m.a build/linux2/libpython3.6.a
+
+    - name: Set up virtual environment
       run: |
-        cd pypperoni/samples/01-basic
-        python3.6 build.py
+        $PYTHON_ROOT/python -m venv --without-pip .venv36
+        source .venv36/bin/activate
+        python --version
+
+    - name: Build ${{ matrix.sample }}
+      run: |
+        source .venv36/bin/activate
+        cd samples/${{ matrix.sample }}
+        python build.py
         cd build
         cmake -DCMAKE_BUILD_TYPE=Release .
-        make -j8
-    - name: Run 01-basic
-      run: |
-        cd pypperoni/samples/01-basic/build
-        ./01-basic
-        cd ..
-        rm -rf build
+        make -j$(nproc)
 
-  sample-02:
-    name: 02-exceptions
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@v2
-      with:
-        path: pypperoni/pypperoni
-    - name: Set up Python 3.6.8
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.6.8
-    - name: Install dependencies
+    - name: Run ${{ matrix.sample }}
       run: |
-        sudo apt-get install -y cmake build-essential gcc g++ python3-dev libz-dev libssl-dev liblzma-dev libgdbm-dev
-    - name: Clone Pypperoni/Python-3.6.8
-      uses: actions/checkout@v2
-      with:
-        repository: Pypperoni/Python-3.6.8
-        path: pypperoni/python
-    - name: Build Pypperoni/Python-3.6.8
-      run: |
-        cd pypperoni/python
-        mkdir -p build/linux2
-        cd build/linux2
-        cmake ../..
-        make -j
-    - name: Clone Pypperoni/samples
-      uses: actions/checkout@v2
-      with:
-        repository: Pypperoni/samples
-        path: pypperoni/samples
-    - name: Build 02-exceptions
-      run: |
-        cd pypperoni/samples/02-exceptions
-        python3.6 build.py
-        cd build
-        cmake -DCMAKE_BUILD_TYPE=Release .
-        make -j8
-    - name: Run 02-exceptions
-      run: |
-        cd pypperoni/samples/02-exceptions/build
-        ./02-exceptions catchall
-        cd ..
-        rm -rf build
-
-  sample-03:
-    name: 03-async
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@v2
-      with:
-        path: pypperoni/pypperoni
-    - name: Set up Python 3.6.8
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.6.8
-    - name: Install dependencies
-      run: |
-        sudo apt-get install -y cmake build-essential gcc g++ python3-dev libz-dev libssl-dev liblzma-dev libgdbm-dev
-    - name: Clone Pypperoni/Python-3.6.8
-      uses: actions/checkout@v2
-      with:
-        repository: Pypperoni/Python-3.6.8
-        path: pypperoni/python
-    - name: Build Pypperoni/Python-3.6.8
-      run: |
-        cd pypperoni/python
-        mkdir -p build/linux2
-        cd build/linux2
-        cmake ../..
-        make -j
-    - name: Clone Pypperoni/samples
-      uses: actions/checkout@v2
-      with:
-        repository: Pypperoni/samples
-        path: pypperoni/samples
-    - name: Build 03-async
-      run: |
-        cd pypperoni/samples/03-async
-        python3.6 build.py
-        cd build
-        cmake -DCMAKE_BUILD_TYPE=Release .
-        make -j8
-    - name: Run 03-async
-      run: |
-        cd pypperoni/samples/03-async/build
-        ./03-async
-        cd ..
-        rm -rf build
-
-  sample-04:
-    name: 04-threading
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@v2
-      with:
-        path: pypperoni/pypperoni
-    - name: Set up Python 3.6.8
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.6.8
-    - name: Install dependencies
-      run: |
-        sudo apt-get install -y cmake build-essential gcc g++ python3-dev libz-dev libssl-dev liblzma-dev libgdbm-dev
-    - name: Clone Pypperoni/Python-3.6.8
-      uses: actions/checkout@v2
-      with:
-        repository: Pypperoni/Python-3.6.8
-        path: pypperoni/python
-    - name: Build Pypperoni/Python-3.6.8
-      run: |
-        cd pypperoni/python
-        mkdir -p build/linux2
-        cd build/linux2
-        cmake ../..
-        make -j
-    - name: Clone Pypperoni/samples
-      uses: actions/checkout@v2
-      with:
-        repository: Pypperoni/samples
-        path: pypperoni/samples
-    - name: Build 04-threading
-      run: |
-        cd pypperoni/samples/04-threading
-        python3.6 build.py
-        cd build
-        cmake -DCMAKE_BUILD_TYPE=Release .
-        make -j4
-    - name: Run 04-threading
-      run: |
-        cd pypperoni/samples/04-threading/build
-        ./04-threading
-        cd ..
-        rm -rf build
+        cd samples/${{ matrix.sample }}/build
+        ./${{ matrix.sample }} ${{ matrix.run_args }}
