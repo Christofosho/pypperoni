@@ -15,10 +15,10 @@
 # language governing permissions and limitations under the
 # License.
 
-from .codeobj import CodeObject
-from .config import IMPORT_ALIASES, SPLIT_INTERVAL
-from .context import Context
-from .util import *
+from app.codeobj import CodeObject
+from app.config import IMPORT_ALIASES, SPLIT_INTERVAL
+from app.context import Context
+from app.util import *
 
 from opcode import opmap, opname, hasjrel, hasjabs
 
