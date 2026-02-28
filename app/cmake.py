@@ -18,7 +18,7 @@
 from app.files import ConditionalFile, FileContainer
 from app.module import Module, PackageModule, write_modules_file
 from app.modulereducer import reduce_modules
-from app.util import safePrint
+from app.util import getPythonPath, safePrint
 
 from threading import Thread, Lock
 from queue import Queue, Empty
@@ -31,7 +31,6 @@ import os
 PYPPERONI_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 PYTHON_ROOT = os.environ.get('PYTHON_ROOT', sys.prefix)
 
-
 class CMakeFileGenerator:
     def __init__(self, project, outputdir='build', nthreads=4):
         self.project = project
@@ -42,7 +41,8 @@ class CMakeFileGenerator:
         self.__files = []
 
         self.cmake_in_file = os.path.join(PYPPERONI_ROOT, 'cmake.in')
-        self.add_directory(os.path.join(PYTHON_ROOT, 'Lib'))
+
+        self.add_directory(os.path.join(PYTHON_ROOT, getPythonPath()))
 
         self.generate_codecs_index()
 
