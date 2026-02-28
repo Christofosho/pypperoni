@@ -15,7 +15,7 @@
 # language governing permissions and limitations under the
 # License.
 
-from . import config
+from app import config
 
 from threading import Lock
 from opcode import HAVE_ARGUMENT, EXTENDED_ARG, opmap

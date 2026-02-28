@@ -65,7 +65,7 @@ Pypperoni was developed initially as an in-house compiler for the free online ga
 
 They recognized the numerous security and performance issues associated with running a production application written in Python, and thus sought out to reinvent the way we traditionally think about Python compilers. Pypperoni is the result of this vision.
 
-Previously, TLOPO maintained their own custom and open source compiler named [Nirai](https://github.com/nirai-compiler). Unlike Pypperoni, Nirai was designed to be specifically used alongside the Panda3D game engine. Pypperoni is the successor to Nirai and is designed to be compatible with any application written in Python 2.7.
+Previously, TLOPO maintained their own custom and open source compiler named [Nirai](https://github.com/nirai-compiler). Unlike Pypperoni, Nirai was designed to be specifically used alongside the Panda3D game engine. Pypperoni is the successor to Nirai and is designed to be compatible with any application written in Python 3.6.
 
 
 ### Maintainers
