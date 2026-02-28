@@ -2,10 +2,10 @@ import argparse
 import os
 import sys
 
-# Add the parent of the pypperoni package to sys.path so it can be imported as a package
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+# Add the project root to sys.path so the app package can be imported
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 
-from pypperoni.cmake import CMakeFileGenerator
+from app.cmake import CMakeFileGenerator
 
 # Ensure relative paths (e.g. 'main.py', 'build/') resolve relative to this script's directory
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
