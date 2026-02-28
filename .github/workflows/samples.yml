@@ -34,8 +34,15 @@ jobs:
         apt-get install -y cmake
         cmake --version
 
+    - name: Set up Python venv
+      run: |
+        python -m venv .venv
+        source .venv/bin/activate
+        python -m pip install --upgrade pip
+
     - name: Build ${{ matrix.sample }}
       run: |
+        source .venv/bin/activate
         python -m samples.${{ matrix.sample }}.build
         cd build
         cmake -DCMAKE_BUILD_TYPE=Release .
@@ -43,5 +50,6 @@ jobs:
 
     - name: Run ${{ matrix.sample }}
       run: |
+        source .venv/bin/activate
         cd samples/${{ matrix.sample }}/build
-        ./${{ matrix.sample }} ${{ matrix.run_args }}
+        ../../.venv/bin/python ./${{ matrix.sample }} ${{ matrix.run_args }}
