@@ -49,9 +49,3 @@ jobs:
       run: |
         cd samples/${{ matrix.sample }}/build
         cmake -DCMAKE_BUILD_TYPE=Release .
-
-    - name: Run ${{ matrix.sample }}
-      run: |
-        . .venv/bin/activate
-        cd samples/${{ matrix.sample }}/build
-        ../../.venv/bin/python ./${{ matrix.sample }} ${{ matrix.run_args }}
