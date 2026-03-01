@@ -44,7 +44,7 @@ jobs:
       run: |
         . .venv/bin/activate
         python -m samples.${{ matrix.sample }}.build
-        cd build
+        cd samples/${{ matrix.sample }}/build
         cmake -DCMAKE_BUILD_TYPE=Release .
         make -j$(nproc)
 
