@@ -1,0 +1,14 @@
+name: Tests
+
+on:
+  push:
+    branches:
+      - '**'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    container: python:3.6
+    steps:
+      - uses: actions/checkout@v4
+      - run: python -m unittest discover -v -s ./tests -p "test_*.py"

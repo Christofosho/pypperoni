@@ -43,3 +43,9 @@ def safeRepr(obj):
     r = r.replace('*', '')
     r = r[:40]
     return r.rstrip('\\')
+
+def getPythonPath():
+    if sys.platform.startswith('linux'):
+        return 'lib'
+    else:
+        return 'Lib' # macOS uses 'Lib' like Windows (CPython default)

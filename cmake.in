@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.16 FATAL_ERROR)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 project($$project$$)
@@ -32,7 +32,8 @@ add_definitions(-DNDEBUG)
 add_definitions(-DPy_BUILD_CORE)
 
 include_directories(gen)
-include_directories($$python_root$$/Include)
+find_package(Python3 REQUIRED COMPONENTS Development)
+include_directories(${Python3_INCLUDE_DIRS})
 include_directories($$pypperoni_root$$/src)
 
 if (UNIX)
@@ -51,7 +52,7 @@ set(_FILES
 $$files$$)
 
 add_executable($$project$$ ${_FILES})
-target_link_libraries($$project$$ python3.6 ${ZLIB_LIBRARIES} ${OPENSSL_LIBRARIES})
+target_link_libraries($$project$$ ${Python3_LIBRARIES} ${ZLIB_LIBRARIES} ${OPENSSL_LIBRARIES})
 if (WIN32)
     target_link_libraries($$project$$ ws2_32 crypt32)
 else()
