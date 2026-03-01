@@ -27,7 +27,7 @@ jobs:
     - name: Install system dependencies
       run: |
         apt-get update
-        apt-get install -y build-essential gcc g++ libz-dev libssl-dev liblzma-dev libgdbm-dev libffi-dev libreadline-dev libsqlite3-dev libbz2-dev libncurses5-dev
+        apt-get install -y build-essential gcc g++ libz-dev libssl-dev liblzma-dev libgdbm-dev libffi-dev libreadline-dev libsqlite3-dev libbz2-dev libncurses5-dev python3-dev
 
     - name: Install CMake
       run: |
@@ -40,10 +40,13 @@ jobs:
         . .venv/bin/activate
         python -m pip install --upgrade pip
 
-    - name: Build ${{ matrix.sample }}
+    - name: Build ${{ matrix.sample }} - Python
       run: |
         . .venv/bin/activate
         python -m samples.${{ matrix.sample }}.build
+
+    - name: Build ${{ matrix.sample }} - CMake
+      run: |
         cd samples/${{ matrix.sample }}/build
         cmake -DCMAKE_BUILD_TYPE=Release .
         make -j$(nproc)
