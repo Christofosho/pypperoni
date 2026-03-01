@@ -1652,7 +1652,7 @@ class Module(ModuleBase):
             if self.is_package():
                 level -= 1
 
-            if self.name.count('.') < (level - 1):
+            if self.name.count('.') < level:
                 raise ImportError('bogus relative import: %s %s (%d)' % (self.name, name, level))
 
             prefix = self.name.rsplit('.', level)[0]
