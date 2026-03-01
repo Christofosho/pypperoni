@@ -11,7 +11,7 @@ Included in this repository are several samples highlighting the core elements t
 Some of these can be obtained through a package manager or tool like Chocolatey. On Windows, managing python versions can be done with virtual environments while also using a tool such as [Python install manager](https://www.python.org/downloads/release/pymanager-260/).
 
 1. [Python 3.6.8](https://www.python.org/downloads/release/python-368/)
-2. [CMake < 3.5](https://cmake.org/download/)
+2. [CMake](https://cmake.org/download/)
 3. [OpenSSL](https://openssl-library.org/source/)
 4. [ZLib](https://zlib.net/)
 
