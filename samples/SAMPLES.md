@@ -8,12 +8,16 @@ Included in this repository are several samples highlighting the core elements t
 
 ## Requirements
 
-1. Python 3.6
-2. CMake < 3.5
+Some of these can be obtained through a package manager or tool like Chocolatey. On Windows, managing python versions can be done with virtual environments while also using a tool such as [Python install manager](https://www.python.org/downloads/release/pymanager-260/).
+
+1. [Python 3.6.8](https://www.python.org/downloads/release/python-368/)
+2. [CMake < 3.5](https://cmake.org/download/)
+3. [OpenSSL](https://openssl-library.org/source/)
+4. [ZLib](https://zlib.net/)
 
 ## Setup
 
-Before running the samples it's best to set up a virtual environment to ensure your global python is not interfering with the project requirements.
+Before running the samples it's best to set up a virtual environment to ensure your global python is not interfering with the project requirements. Ensure OpenSSL and ZLib are installed, and that they have their environment variables set (including ZLIB_ROOT on Windows).
 
 To set up the samples run the following from the root of the pypperoni project (may differ by operating system):
 
